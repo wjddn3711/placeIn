@@ -14,8 +14,5 @@ public class BaseController {
 //        return "index";
     }
 
-//    @RequestMapping("/error")
-//    public String error(){
-//        return "error";
-//    }
+
 }

@@ -1,5 +1,10 @@
 package com.lee.placein.controller.api;
 
+import com.lee.placein.constant.ErrorCode;
+import com.lee.placein.dto.ApiErrorResponse;
+import com.lee.placein.exception.GeneralException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,5 +37,6 @@ public class APIEventController {
     public Boolean removeEvent(@PathVariable Integer eventId){
         return true;
     }
+
 
 }
