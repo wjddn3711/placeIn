@@ -10,11 +10,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class PlaceController {
     @GetMapping("/")
     public String places(){
-        return "places/index";
+        return "place/index";
     }
 
     @GetMapping("/{placeId}")
-    public String placeDetail(@PathVariable Integer placeId){
+    public String placeDetail(@PathVariable Long placeId){
         return "place/detail";
     }
 }

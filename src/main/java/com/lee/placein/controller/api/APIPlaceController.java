@@ -5,6 +5,7 @@ import com.lee.placein.dto.ApiDataResponse;
 import com.lee.placein.dto.PlaceDTO;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RequestMapping("/api")
@@ -19,8 +20,8 @@ public class APIPlaceController {
                 "서울시 강남구 역삼동 782-4",
                 "010372918",
                 30,
-                "신장개업"
-        )));
+                "신장개업",
+                LocalDateTime.now(), LocalDateTime.now())));
     }
 
     @PostMapping("/places")
@@ -40,8 +41,8 @@ public class APIPlaceController {
                 "서울시 강남구 역삼동 782-4",
                 "010372918",
                 30,
-                "신장개업"
-        ));
+                "신장개업",
+                LocalDateTime.now(), LocalDateTime.now()));
     }
 
     @PutMapping("/places/{placeId}")
