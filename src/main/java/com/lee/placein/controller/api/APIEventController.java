@@ -4,22 +4,27 @@ import com.lee.placein.constant.ErrorCode;
 import com.lee.placein.constant.EventStatus;
 import com.lee.placein.dto.ApiDataResponse;
 import com.lee.placein.dto.ApiErrorResponse;
+import com.lee.placein.dto.EventRequest;
 import com.lee.placein.dto.EventResponse;
 import com.lee.placein.exception.GeneralException;
 import com.lee.placein.repository.EventRepository;
 import com.lee.placein.service.EventService;
-import com.sun.jdi.request.EventRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Required;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Positive;
+import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Validated
 @RequiredArgsConstructor
 @RequestMapping("/api")
 @RestController
@@ -29,8 +34,8 @@ public class APIEventController {
 
     @GetMapping("/events")
     public ApiDataResponse<List<EventResponse>> getEvents(
-            Long placeId,
-            String eventName,
+            @Positive Long placeId,
+            @Size(min=2) String eventName,
             EventStatus eventStatus,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime eventStartDatetime,
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime eventEndDatetime
@@ -49,8 +54,10 @@ public class APIEventController {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("/events")
-    public ApiDataResponse<Void> createEvent(@RequestBody EventRequest eventRequest) {
-        return ApiDataResponse.empty();
+    public ApiDataResponse<String> createEvent(@Valid @RequestBody EventRequest eventRequest) {
+        boolean result = eventService.createEvent(eventRequest.toDTO());
+
+        return ApiDataResponse.of(Boolean.toString(result));
     }
 
     @GetMapping("/events/{eventId}")
