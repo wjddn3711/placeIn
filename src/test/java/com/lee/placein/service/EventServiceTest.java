@@ -2,6 +2,7 @@ package com.lee.placein.service;
 
 import com.lee.placein.constant.EventStatus;
 import com.lee.placein.dto.EventDTO;
+import com.lee.placein.repository.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -16,32 +17,39 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 
+@ExtendWith(MockitoExtension.class)
 class EventServiceTest {
 
-    @BeforeEach
-    void setUp(){
-        sut = new EventService();
-    }
+//    @BeforeEach
+//    void setUp(){
+//        sut = new EventService();
+//    }
 
-    private EventService sut;
+    @InjectMocks private EventService sut;
+    @Mock private EventRepository eventRepository; // repository를 sut 에 주입해준다
+
 
 
     @DisplayName("검색 조건 없이 이벤트를 검색하면, 전체 결과를 출력하여 보여준다.")
     @Test
     void givenNothing_whenSearchingEvents_thenReturnsEntireEventList() {
         // Given
-//        given(eventRepository.findEvents(null, null, null, null, null))
-//                .willReturn(List.of(
-//                        createEventDTO(1L, "오전 운동", true),
-//                        createEventDTO(1L, "오후 운동", false)
-//                ));
+        given(eventRepository.findEvents(null, null, null, null, null))
+                .willReturn(List.of(
+                        createEventDTO(1L, "오전 운동", true),
+                        createEventDTO(1L, "오후 운동", false)
+                ));
 
         // When
         List<EventDTO> list = sut.getEvents(null, null, null, null, null);
 
         // Then
         assertThat(list).hasSize(2);
+        then(eventRepository).should().findEvents(null, null, null, null, null);
     }
 
     @DisplayName("검색 조건과 함께 이벤트를 검색하면, 검색 결과를 출력하여 보여준다.")
@@ -54,10 +62,10 @@ class EventServiceTest {
         LocalDateTime eventStartDatetime = LocalDateTime.of(2021, 1, 1, 0, 0, 0);
         LocalDateTime eventEndDatetime = LocalDateTime.of(2021, 1, 2, 0, 0, 0);
 
-//        given(eventRepository.findEvents(placeId, eventName, eventStatus, eventStartDatetime, eventEndDatetime))
-//                .willReturn(List.of(
-//                        createEventDTO(1L, "오전 운동", eventStatus, eventStartDatetime, eventEndDatetime)
-//                ));
+        given(eventRepository.findEvents(placeId, eventName, eventStatus, eventStartDatetime, eventEndDatetime))
+                .willReturn(List.of(
+                        createEventDTO(1L, "오전 운동", eventStatus, eventStartDatetime, eventEndDatetime)
+                ));
 
         // When
         List<EventDTO> list = sut.getEvents(placeId, eventName, eventStatus, eventStartDatetime, eventEndDatetime);
@@ -73,9 +81,37 @@ class EventServiceTest {
                     assertThat(event.eventStartDatetime()).isAfterOrEqualTo(eventStartDatetime);
                     assertThat(event.eventEndDatetime()).isBeforeOrEqualTo(eventEndDatetime);
                 });
-//        then(eventRepository).should().findEvents(placeId, eventName, eventStatus, eventStartDatetime, eventEndDatetime);
+        then(eventRepository).should().findEvents(placeId, eventName, eventStatus, eventStartDatetime, eventEndDatetime);
     }
 
+    @DisplayName("이벤트 정보를 주면, 이벤트를 생성하고 결과를 true 로 보여준다.")
+    @Test
+    void givenEvent_whenCreating_thenCreatesEventAndReturnsTrue() {
+        // Given
+        EventDTO dto = createEventDTO(1L, "오후 운동", false);
+        given(eventRepository.insertEvent(dto)).willReturn(true);
+
+        // When
+        boolean result = sut.createEvent(dto);
+
+        // Then
+        assertThat(result).isTrue();
+        then(eventRepository).should().insertEvent(dto);
+    }
+
+    @DisplayName("이벤트 정보를 주지 않으면, 생성 중단하고 결과를 false 로 보여준다.")
+    @Test
+    void givenNothing_whenCreating_thenAbortCreatingAndReturnsFalse() {
+        // Given
+        given(eventRepository.insertEvent(null)).willReturn(false);
+
+        // When
+        boolean result = sut.createEvent(null);
+
+        // Then
+        assertThat(result).isFalse();
+        then(eventRepository).should().insertEvent(null);
+    }
 //    @DisplayName("이벤트를 검색하는데 에러가 발생한 경우, 줄서기 프로젝트 기본 에러로 전환하여 예외 던진다.")
 //    @Test
 //    void givenDataRelatedException_whenSearchingEvents_thenThrowsGeneralException() {
@@ -99,12 +135,14 @@ class EventServiceTest {
         // Given
         long eventId = 1L;
         EventDTO eventDTO = createEventDTO(1L, "오전 운동", true);
+        given(eventRepository.findEvent(eventId)).willReturn(Optional.of(eventDTO));
 
         // When
         Optional<EventDTO> result = sut.getEvent(eventId);
 
         // Then
         assertThat(result).hasValue(eventDTO);
+        then(eventRepository).should().findEvent(eventId);
     }
 
     @DisplayName("이벤트 ID로 이벤트를 조회하면, 빈 정보를 출력하여 보여준다.")
@@ -112,21 +150,21 @@ class EventServiceTest {
     void givenEventId_whenSearchingNonexistentEvent_thenReturnsEmptyOptional() {
         // Given
         long eventId = 2L;
-//        given(eventRepository.findEvent(eventId)).willReturn(Optional.empty());
+        given(eventRepository.findEvent(eventId)).willReturn(Optional.empty());
 
         // When
         Optional<EventDTO> result = sut.getEvent(eventId);
 
         // Then
         assertThat(result).isEmpty();
-//        then(eventRepository).should().findEvent(eventId);
+        then(eventRepository).should().findEvent(eventId);
     }
 
     @DisplayName("이벤트 ID로 이벤트를 조회하는데 데이터 관련 에러가 발생한 경우, 줄서기 프로젝트 기본 에러로 전환하여 예외 던진다.")
     @Test
     void givenDataRelatedException_whenSearchingEvent_thenThrowsGeneralException() {
         // Given
-        RuntimeException e = new RuntimeException("This is test.");
+//        RuntimeException e = new RuntimeException("This is test.");
 //        given(eventRepository.findEvent(any())).willThrow(e);
 
         // When
@@ -185,31 +223,48 @@ class EventServiceTest {
 //        then(eventRepository).should().insertEvent(any());
 //    }
 
-    @DisplayName("이벤트 ID와 정보를 주면, 이벤트 정보를 변경하고 결과를 true 로 보여준다.")
+//    @DisplayName("이벤트 ID와 정보를 주면, 이벤트 정보를 변경하고 결과를 true 로 보여준다.")
+//    @Test
+//    void givenEventIdAndItsInfo_whenModifying_thenModifiesEventAndReturnsTrue() {
+//        // Given
+//        long eventId = 1L;
+//        EventDTO dto = createEventDTO(1L, "오후 운동", false);
+//        given(eventRepository.updateEvent(eventId, null)).willReturn(false);
+//        // When
+//        boolean result = sut.modifyEvent(eventId, dto);
+//
+//        // Then
+//        assertThat(result).isTrue();
+//        then(eventRepository).should().updateEvent(eventId, null);
+//    }
+
+    @DisplayName("이벤트 ID를 주면, 이벤트 정보를 삭제하고 결과를 true 로 보여준다.")
     @Test
-    void givenEventIdAndItsInfo_whenModifying_thenModifiesEventAndReturnsTrue() {
+    void givenEventId_whenDeleting_thenDeletesEventAndReturnsTrue() {
         // Given
         long eventId = 1L;
-        EventDTO dto = createEventDTO(1L, "오후 운동", false);
+        given(eventRepository.deleteEvent(eventId)).willReturn(true);
 
         // When
-        boolean result = sut.modifyEvent(eventId, dto);
+        boolean result = sut.removeEvent(eventId);
 
         // Then
         assertThat(result).isTrue();
+        then(eventRepository).should().deleteEvent(eventId);
     }
 
-    @DisplayName("이벤트 ID를 주지 않으면, 이벤트 정보 변경 중단하고 결과를 false 로 보여준다.")
+    @DisplayName("이벤트 ID를 주지 않으면, 삭제 중단하고 결과를 false 로 보여준다.")
     @Test
-    void givenNoEventId_whenModifying_thenAbortModifyingAndReturnsFalse() {
+    void givenNothing_whenDeleting_thenAbortsDeletingAndReturnsFalse() {
         // Given
-        EventDTO dto = createEventDTO(1L, "오후 운동", false);
+        given(eventRepository.deleteEvent(null)).willReturn(false);
 
         // When
-        boolean result = sut.modifyEvent(null, dto);
+        boolean result = sut.removeEvent(null);
 
         // Then
         assertThat(result).isFalse();
+        then(eventRepository).should().deleteEvent(null);
     }
 
     @DisplayName("이벤트 ID만 주고 변경할 정보를 주지 않으면, 이벤트 정보 변경 중단하고 결과를 false 로 보여준다.")
@@ -242,30 +297,6 @@ class EventServiceTest {
 //        then(eventRepository).should().updateEvent(any(), any());
 //    }
 
-    @DisplayName("이벤트 ID를 주면, 이벤트 정보를 삭제하고 결과를 true 로 보여준다.")
-    @Test
-    void givenEventId_whenDeleting_thenDeletesEventAndReturnsTrue() {
-        // Given
-        long eventId = 1L;
-
-        // When
-        boolean result = sut.removeEvent(eventId);
-
-        // Then
-        assertThat(result).isTrue();
-    }
-
-    @DisplayName("이벤트 ID를 주지 않으면, 삭제 중단하고 결과를 false 로 보여준다.")
-    @Test
-    void givenNothing_whenDeleting_thenAbortsDeletingAndReturnsFalse() {
-        // Given
-
-        // When
-        boolean result = sut.removeEvent(null);
-
-        // Then
-        assertThat(result).isFalse();
-    }
 
 //    @DisplayName("이벤트 삭제 중 데이터 오류가 발생하면, 줄서기 프로젝트 기본 에러로 전환하여 예외 던진다.")
 //    @Test

@@ -2,12 +2,15 @@ package com.lee.placein.service;
 
 import com.lee.placein.constant.EventStatus;
 import com.lee.placein.dto.EventDTO;
+import com.lee.placein.repository.EventRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+@RequiredArgsConstructor
 @Service
 public class EventService{
 
@@ -20,45 +23,22 @@ public class EventService{
             LocalDateTime eventStartDatetime,
             LocalDateTime eventEndDatetime
     ) {
-        return List.of(EventDTO.of(
-                placeId,
-                eventName,
-                EventStatus.OPENED,
-                LocalDateTime.parse("2021-01T00:00:00"),
-                LocalDateTime.parse("2021-01T00:00:00"),
-                0,
-                24,
-                "마스크 꼭 착용하세요",
-                LocalDateTime.now(),
-                LocalDateTime.now()
-        ),
-                EventDTO.of(
-                        placeId,
-                        eventName,
-                        eventStatus,
-                        eventStartDateTime,
-                        eventEndDateTime,
-                        0,
-                        24,
-                        "마스크 꼭 착용하세요",
-                        LocalDateTime.now(),
-                        LocalDateTime.now()
-                );
+        return eventRepository.findEvents(placeId, eventName, eventStatus, eventStartDatetime, eventEndDatetime);
     }
 
     public Optional<EventDTO> getEvent(Long eventId){
-        return Optional.empty();
+        return eventRepository.findEvent(eventId);
     }
 
     public boolean createEvent(EventDTO eventDTO){
-        return true;
+        return eventRepository.insertEvent(eventDTO);
     }
 
     public boolean modifyEvent(Long eventId, EventDTO eventDTO){
-        return true;
+        return eventRepository.updateEvent(eventId,eventDTO);
     }
 
     public boolean removeEvent(Long eventId){
-        return true;
+        return eventRepository.deleteEvent(eventId);
     }
 }
